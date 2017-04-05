@@ -33,11 +33,11 @@ minetest.register_chatcommand("rate", {
 			minetest.chat_send_player(name, "[T-Rate] Invalid usage, /rate <value> <description>")
 		elseif not param:match("%d") then
 			print("cow")
-			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 1 and 5.")
+			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 0 and 5.")
 		elseif not param:match("%w+") then
 			minetest.chat_send_player(name, "[T-Rate] Please enter a description.")
 		elseif tonumber(param:match("%d")) > 5 then
-			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 1 and 5.")
+			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 0 and 5.")
 		elseif not tonumber(param:match("%d")) then
 			minetest.chat_send_player(name, "[T-Rate] Please format the number value as, ex: 5 or 4.5")
 		else
