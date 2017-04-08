@@ -30,20 +30,23 @@ minetest.register_chatcommand("rate", {
 	param = "<value> <description>",
 	description = "Rate current server.",
 	func = function(name, param)
-		if not param then
+		if param == "" then
 			minetest.chat_send_player(name, "[T-Rate] Invalid usage, /rate <value> <description>")
 		elseif not param:match("%d") then
-			print("cow")
 			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 0 and 5.")
-		elseif not param:match("%w+") then
+		elseif not param:match(".+ .+") then
 			minetest.chat_send_player(name, "[T-Rate] Please enter a description.")
-		elseif tonumber(param:match("%d")) > 5 then
+		elseif param:match("%d%.%d") and tonumber(param:match("%d%.%d")) > 5 then
 			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 0 and 5.")
-		elseif not tonumber(param:match("%d")) then
-			minetest.chat_send_player(name, "[T-Rate] Please format the number value as, ex: 5 or 4.5")
+		elseif param:match("%d") and tonumber(param:match("%d")) > 5 then
+			minetest.chat_send_player(name, "[T-Rate] You must enter a number value between 0 and 5.")
+		elseif param:match("-%d") then
+			minetest.chat_send_player(name, "[T-Rate] Rating must be a positive value.")
 		else
-			if param:match("%d%.+") then
+			if param:match("%d%.%d") then
 				rating.value[name] = tonumber(param:match("%d.%d"))
+			elseif param:match("%.%d") then
+				rating.value[name] = tonumber(param:match("%.%d"))
 			else
 				rating.value[name] = tonumber(param:match("%d"))
 			end
@@ -81,6 +84,8 @@ function overall_rating()
 	overall = ratings / total
 	if total == 1 then
 		return ratings
+	elseif total == 2 then
+		return ratings / 2
 	else
 		return tonumber(string.match(tostring(overall), "%d.%d%d"))
 	end
@@ -108,7 +113,7 @@ function get_reviews()
 		reviews[k] = "Player: " .. k .. " - Rating: " .. v
 	end
 	for k,v in pairs(rating.time) do
-		reviews[k] = reviews[k] .. " - " .. os.date("%x at %X", rating.time[k]) .. ",-- "
+		reviews[k] = reviews[k] .. "," .. os.date("%x at %X", rating.time[k]) .. ",-- "
 	end
 	for k,v in pairs(rating.description) do
 		reviews[k] = reviews[k] .. v .. ",,"
@@ -127,14 +132,13 @@ minetest.register_chatcommand("rating", {
 		else
 			minetest.show_formspec(name, "trating:server_rating",
 				"size[6,7]" ..
-				"label[2.3,0;Overall Rating:\n   ---------------]" ..
+				"label[2.2,0;Overall Rating:\n   ---------------]" ..
 				"label[2.7,1;" .. overall_rating() .. "]" ..
 				"label[1.5,1.5;|]" ..
 				"label[4.5,1.5;|]" ..
 				"box[1.5,1.5;" .. get_bar() .. ",.5;" .. color() .. "]" ..
 				"label[2.3,2.5;Player Reviews:]" ..
-				"textlist[.5,3;5.5,3.5;reviews;" .. get_reviews() .. ";;true]")
+				"textlist[0,3;6,3.5;reviews;" .. get_reviews() .. ";;true]")
 		end
 	end
 })
-
