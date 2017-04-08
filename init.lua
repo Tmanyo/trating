@@ -1,6 +1,7 @@
 rating = {
 	value = {},
-	description = {}
+	description = {},
+	time = {}
 }
 
 local f = io.open(minetest.get_worldpath() .. "/server_rating.db", "r")
@@ -48,6 +49,9 @@ minetest.register_chatcommand("rate", {
 			end
 			local desc_done = {}
 			local desc = param:sub(param:find(" ") + 1, param:len())
+			if desc:match(",") then
+				desc = desc:gsub(",", " ")
+			end
 			if desc:len() > 71 then
 				local find_if_space = desc:sub(70, 72)
 				if find_if_space:find(" ") == 2 then
@@ -59,6 +63,7 @@ minetest.register_chatcommand("rate", {
 				desc_done = desc
 			end
 			rating.description[name] = desc_done
+			rating.time[name] = os.time()
 			save_rating()
 			minetest.chat_send_player(name, "[T-Rate] Thank you for your feedback!")
 		end
@@ -74,7 +79,11 @@ function overall_rating()
 		total = total + 1
 	end
 	overall = ratings / total
-	return tonumber(string.match(tostring(overall), "%d.%d%d"))
+	if total == 1 then
+		return ratings
+	else
+		return tonumber(string.match(tostring(overall), "%d.%d%d"))
+	end
 end
 
 function get_bar()
@@ -96,7 +105,10 @@ end
 function get_reviews()
 	local reviews = {}
 	for k,v in pairs(rating.value) do
-		reviews[k] = "Player: " .. k .. " - Rating: " .. v .. ",-- "
+		reviews[k] = "Player: " .. k .. " - Rating: " .. v
+	end
+	for k,v in pairs(rating.time) do
+		reviews[k] = reviews[k] .. " - " .. os.date("%x at %X", rating.time[k]) .. ",-- "
 	end
 	for k,v in pairs(rating.description) do
 		reviews[k] = reviews[k] .. v .. ",,"
@@ -110,14 +122,19 @@ end
 minetest.register_chatcommand("rating", {
 	description = "Open server rating form.",
 	func = function(name, param)
-		minetest.show_formspec(name, "trating:server_rating",
-			"size[6,7]" ..
-			"label[2.3,0;Overall Rating:\n   ---------------]" ..
-			"label[2.8,1;" .. overall_rating() .. "]" ..
-			"label[1.5,1.5;|]" ..
-			"label[4.5,1.5;|]" ..
-			"box[1.5,1.5;" .. get_bar() .. ",.5;" .. color() .. "]" ..
-			"label[2.3,2.5;Player Reviews:]" ..
-			"textlist[.5,3;5.5,3.5;reviews;" .. get_reviews() .. ";;true]")
+		if overall_rating() == nil then
+			minetest.chat_send_player(name, "[T-Rate] There are no reviews yet!")
+		else
+			minetest.show_formspec(name, "trating:server_rating",
+				"size[6,7]" ..
+				"label[2.3,0;Overall Rating:\n   ---------------]" ..
+				"label[2.7,1;" .. overall_rating() .. "]" ..
+				"label[1.5,1.5;|]" ..
+				"label[4.5,1.5;|]" ..
+				"box[1.5,1.5;" .. get_bar() .. ",.5;" .. color() .. "]" ..
+				"label[2.3,2.5;Player Reviews:]" ..
+				"textlist[.5,3;5.5,3.5;reviews;" .. get_reviews() .. ";;true]")
+		end
 	end
 })
+
